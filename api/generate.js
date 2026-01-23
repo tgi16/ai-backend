@@ -1,63 +1,43 @@
+import fetch from "node-fetch";
+
 export default async function handler(req, res) {
-  // ✅ Allow POST only
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const { prompt } = req.body;
+
+  if (!prompt) {
+    return res.status(400).json({ error: "Prompt မထည့်ထားပါ" });
+  }
+
   try {
-    const { prompt } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
+    const model = "gemini-1.5-flash";
 
-    // ✅ Input validation
-    if (!prompt || typeof prompt !== "string") {
-      return res.status(400).json({ error: "Invalid prompt" });
-    }
+    const payload = {
+      contents: [{ parts: [{ text: prompt }] }]
+    };
 
-    // ✅ Prompt length protection
-    if (prompt.length > 6000) {
-      return res.status(400).json({ error: "Prompt too long" });
-    }
-
-    // 🔐 API Key (Server only)
-    const API_KEY = process.env.GEMINI_API_KEY;
-    if (!API_KEY) {
-      return res.status(500).json({ error: "Server API key missing" });
-    }
-
-    // ✅ Call AI provider
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: prompt }]
-            }
-          ]
-        })
+        body: JSON.stringify(payload),
       }
     );
 
     const data = await response.json();
 
-    // ✅ Provider error handling
     if (!response.ok) {
-      console.error("AI API error:", data);
-      return res.status(500).json({
-        error: "AI service error"
-      });
+      return res.status(500).json({ error: data.error?.message || "API Error" });
     }
 
-    // ✅ Safe response extraction
-    const result =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    res.status(200).json({ result: resultText });
 
-    return res.status(200).json({ result });
-
-  } catch (err) {
-    console.error("Server crash:", err);
-    return res.status(500).json({ error: "Internal server error" });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 }
