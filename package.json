@@ -1,8 +1,8 @@
 {
   "name": "ai-backend",
   "version": "1.0.0",
-  "license": "MIT",
-  "dependencies": {
-    "node-fetch": "^3.3.2"
+  "private": true,
+  "scripts": {
+    "start": "vercel dev"
   }
 }
