@@ -24,7 +24,7 @@ export default async function handler(req, res) {
   }
 
   // ✅ Use ONE correct model
-  const model = "gemini-1.5-pro";
+  const model = "gemini-2.5-flash";
 
   try {
     const response = await fetch(
