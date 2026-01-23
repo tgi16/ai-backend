@@ -36,6 +36,9 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
+    // 🔥 ဒီ line ကိုထည့်ပြီး response ကိုကြည့်မယ်
+    console.log("Gemini response:", JSON.stringify(data, null, 2));
+
     if (!response.ok) {
       return res.status(response.status).json({ error: data.error?.message });
     }
