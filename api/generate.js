@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // CORS
+  // CORS (Browser ကနေ ချိတ်ဆက်နိုင်ဖို့)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
