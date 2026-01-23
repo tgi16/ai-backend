@@ -23,22 +23,17 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "GEMINI_API_KEY မရှိပါ" });
   }
 
-  // ✅ Correct model (supported for generateContent)
-  const model = "gemini-1.5-pro"; // or "gemini-1.5"
-
   try {
-    const model = "gemini-1.5-pro"; 
-
-const response = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-  {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-    }),
-  }
-);
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+        }),
+      }
+    );
 
     const data = await response.json();
 
