@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   const model = "gemini-1.5-pro"; // or "gemini-1.5"
 
   try {
-    const model = "gemini-1.5-pro"; // or gemini-1.5
+    const model = "gemini-1.5-pro"; 
 
 const response = await fetch(
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
