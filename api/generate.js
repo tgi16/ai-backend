@@ -1,12 +1,9 @@
-import fetch from "node-fetch";
-
 export default async function handler(req, res) {
-  // CORS Headers
+  // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Handle OPTIONS preflight request
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -22,12 +19,14 @@ export default async function handler(req, res) {
 
   try {
     const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "GEMINI_API_KEY မရှိပါ" });
+    }
+
     const model = "gemini-1.5-flash";
+    const payload = { contents: [{ parts: [{ text: prompt }] }] };
 
-    const payload = {
-      contents: [{ parts: [{ text: prompt }] }]
-    };
-
+    // Node 18+ built-in fetch
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
       {
