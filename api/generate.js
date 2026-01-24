@@ -28,27 +28,27 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Missing API key" });
     }
 
-    // ✅ CORRECT v1 ENDPOINT + MODEL
     const url =
-      "https://generativelanguage.googleapis.com/v1/models/" +
-      "gemini-1.5-flash:generateContent?key=" + apiKey;
+  "https://generativelanguage.googleapis.com/v1/models/" +
+  "gemini-2.5-flash:generateContent?key=" + apiKey;
 
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 600
-        }
-      })
-    });
+const r = await fetch(url, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: prompt }]
+      }
+    ],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 600
+    }
+  })
+});
+
 
     const data = await r.json();
 
