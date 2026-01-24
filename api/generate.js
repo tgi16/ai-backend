@@ -29,17 +29,22 @@ export default async function handler(req, res) {
   }
 
   const r = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key=${apiKey}`,
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [
+        { role: "user", parts: [{ text: prompt }] }
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 600
+      }
+    })
+  }
+);
 
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 500 }
-      })
-    }
-  );
 
   const d = await r.json();
   console.log("📦 Gemini:", d);
