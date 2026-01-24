@@ -1,7 +1,18 @@
 // api/generate.js
 
 export default async function handler(req, res) {
-  // ---- METHOD GUARD ----
+
+  /* ================= CORS HEADERS ================= */
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  // ---- Preflight request ----
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  // ---- Method guard ----
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -9,29 +20,29 @@ export default async function handler(req, res) {
   try {
     const { prompt } = req.body || {};
 
-    // ---- INPUT VALIDATION ----
+    // ---- Validation ----
     if (!prompt || typeof prompt !== "string") {
       return res.status(400).json({
-        error: "Invalid request. 'prompt' (string) is required."
+        error: "Invalid request. 'prompt' is required."
       });
     }
 
-    // ---- TEXT-ONLY GUARD (IMPORTANT) ----
-    if (req.body.image || req.body.images || req.body.inlineData) {
+    // ---- Text-only guard ----
+    if (req.body.image || req.body.images) {
       return res.status(400).json({
-        error: "Image / Vision input is disabled. Text-only mode."
+        error: "Image input disabled. Text-only mode."
       });
     }
 
-    // ---- API KEY CHECK ----
+    // ---- API key ----
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return res.status(500).json({
-        error: "Server configuration error: Missing API key."
+        error: "Server misconfiguration (API key missing)."
       });
     }
 
-    // ---- GEMINI REQUEST (QUOTA-SAFE) ----
+    // ---- Gemini call (quota-safe) ----
     const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
@@ -39,14 +50,11 @@ export default async function handler(req, res) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [
-            {
-              role: "user",
-              parts: [{ text: prompt }]
-            }
+            { role: "user", parts: [{ text: prompt }] }
           ],
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 600   // 🔥 quota-safe
+            maxOutputTokens: 600
           }
         })
       }
@@ -54,53 +62,30 @@ export default async function handler(req, res) {
 
     const data = await geminiRes.json();
 
-    // ---- ERROR MAPPING (VERY IMPORTANT) ----
+    // ---- Error mapping ----
     if (!geminiRes.ok) {
-      const msg =
-        data?.error?.message ||
-        "Gemini API error";
+      const msg = data?.error?.message || "Gemini error";
 
-      // Quota / rate limit
-      if (
-        msg.includes("quota") ||
-        msg.includes("rate") ||
-        geminiRes.status === 429
-      ) {
+      if (msg.includes("quota") || geminiRes.status === 429) {
         return res.status(200).json({
-          error: "Quota limit reached. Please wait or reduce usage."
+          error: "Quota limit reached. Please wait."
         });
       }
 
-      // Auth / key error
-      if (
-        msg.includes("API key") ||
-        geminiRes.status === 401 ||
-        geminiRes.status === 403
-      ) {
-        return res.status(200).json({
-          error: "Invalid or inactive API key."
-        });
-      }
-
-      // Fallback
       return res.status(200).json({
-        error: "AI service temporarily unavailable."
+        error: "AI service unavailable."
       });
     }
 
-    // ---- SAFE RESPONSE EXTRACTION ----
     const text =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "";
+      data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    return res.status(200).json({
-      result: text
-    });
+    return res.status(200).json({ result: text });
 
   } catch (err) {
-    console.error("Backend Error:", err);
+    console.error("Backend error:", err);
     return res.status(200).json({
-      error: "Server error. Please try again later."
+      error: "Server error. Try again later."
     });
   }
 }
