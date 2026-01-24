@@ -1,3 +1,7 @@
+export const config = {
+  runtime: "nodejs"
+};
+
 // api/generate.js
 
 export default async function handler(req, res) {
