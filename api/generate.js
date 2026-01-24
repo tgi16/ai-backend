@@ -2,82 +2,62 @@ export const config = {
   runtime: "nodejs"
 };
 
-// api/generate.js
-
 export default async function handler(req, res) {
 
-  /* ================= CORS HEADERS ================= */
+  // ---------- CORS ----------
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // ---- Preflight request ----
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  // ---- Method guard ----
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  console.log("✅ Function invoked");
+
   try {
     const { prompt } = req.body || {};
+    console.log("📥 Prompt received:", prompt?.slice(0, 60));
 
-    // ---- Validation ----
-    if (!prompt || typeof prompt !== "string") {
-      return res.status(400).json({
-        error: "Invalid request. 'prompt' is required."
-      });
+    if (!prompt) {
+      return res.status(400).json({ error: "Prompt is required" });
     }
 
-    // ---- Text-only guard ----
-    if (req.body.image || req.body.images) {
-      return res.status(400).json({
-        error: "Image input disabled. Text-only mode."
-      });
-    }
-
-    // ---- API key ----
     const apiKey = process.env.GEMINI_API_KEY;
+    console.log("🔑 API key exists:", !!apiKey);
+
     if (!apiKey) {
-      return res.status(500).json({
-        error: "Server misconfiguration (API key missing)."
-      });
+      return res.status(500).json({ error: "API key missing" });
     }
 
-    // ---- Gemini call (quota-safe) ----
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            { role: "user", parts: [{ text: prompt }] }
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 600
-          }
-        })
-      }
-    );
+    const url =
+      "https://generativelanguage.googleapis.com/v1beta/models/" +
+      "gemini-1.5-flash:generateContent?key=" + apiKey;
+
+    const geminiRes = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          { role: "user", parts: [{ text: prompt }] }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 500
+        }
+      })
+    });
 
     const data = await geminiRes.json();
+    console.log("📦 Gemini response:", data);
 
-    // ---- Error mapping ----
     if (!geminiRes.ok) {
-      const msg = data?.error?.message || "Gemini error";
-
-      if (msg.includes("quota") || geminiRes.status === 429) {
-        return res.status(200).json({
-          error: "Quota limit reached. Please wait."
-        });
-      }
-
       return res.status(200).json({
-        error: "AI service unavailable."
+        error: data?.error?.message || "Gemini API error"
       });
     }
 
@@ -87,9 +67,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ result: text });
 
   } catch (err) {
-    console.error("Backend error:", err);
+    console.error("❌ Backend crash:", err);
     return res.status(200).json({
-      error: "Server error. Try again later."
+      error: "Server error"
     });
   }
 }
