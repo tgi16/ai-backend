@@ -69,3 +69,7 @@ export default async function handler(req, res) {
     });
   }
 }
+
+// Code ထဲမှာ ဒီလိုလေး ထည့်ကြည့်ပါ
+const apiKey = (process.env.GEMINI_API_KEY || "").trim();
+console.log("API Key loaded:", apiKey ? "Yes" : "No"); // Log ထဲမှာ Yes လို့ ပေါ်လာရပါမယ်
