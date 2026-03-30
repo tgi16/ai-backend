@@ -21,8 +21,8 @@ export default async function handler(req, res) {
     // 1. API Key ခေါ်ယူခြင်း
     const apiKey = (process.env.GEMINI_API_KEY || "").trim();
     
-    // API Key ရှိမရှိ စစ်ဆေးပြီး Log ထုတ်ခြင်း (Debug လုပ်ရန်)
-    console.log("API Key loaded:", apiKey ? "Yes (Length: " + apiKey.length + ")" : "No");
+    // Debug Log (Key တစ်ခုလုံးမပါဘဲ အရှည်ကိုပဲ Log ထုတ်ပေးပါမယ်)
+    console.log("API Key loaded:", apiKey ? `Yes (Length: ${apiKey.length})` : "No");
 
     if (!apiKey) {
       return res.status(500).json({ error: "Relay is missing GEMINI_API_KEY environment variable." });
@@ -43,13 +43,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Invalid payload. 'model' and 'requestBody' are required." });
     }
 
-    // 4. Endpoint တည်ဆောက်ခြင်း (Key ကို URL parameter အနေနဲ့ ပို့ခြင်း)
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    // 4. Endpoint တည်ဆောက်ခြင်း (Header-based auth ကို သုံးခြင်း)
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
     // 5. Gemini API ဆီ Request ပို့ခြင်း
     const upstreamResponse = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey, // API Key ကို Header ကနေ ပို့ခြင်း
+      },
       body: JSON.stringify(requestBody),
     });
 
@@ -57,7 +60,7 @@ export default async function handler(req, res) {
 
     // 6. API ကနေ Error ပြန်လာရင် ဖမ်းယူခြင်း
     if (!upstreamResponse.ok) {
-      console.error("[Gemini API Error]:", responseData);
+      console.error("[Gemini API Error]:", JSON.stringify(responseData));
       return res.status(upstreamResponse.status).json(responseData);
     }
 
