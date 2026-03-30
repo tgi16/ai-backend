@@ -1,9 +1,12 @@
 export const config = { runtime: "nodejs" };
 
 export default async function handler(req, res) {
-  // Debug: ဘယ် Method နဲ့ ရောက်လာလဲဆိုတာ အရင်ဆုံး Log ထုတ်မယ်
-  console.log("Incoming Request Method:", req.method);
-  console.log("Incoming Request URL:", req.url);
+  // DEBUG: Plugin ကနေ ပို့လိုက်တဲ့ Request အကုန်လုံးကို Log ထုတ်မယ်
+  console.log("--- DEBUG START ---");
+  console.log("Method:", req.method);
+  console.log("Headers:", JSON.stringify(req.headers));
+  console.log("Body:", JSON.stringify(req.body));
+  console.log("--- DEBUG END ---");
 
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -11,6 +14,7 @@ export default async function handler(req, res) {
 
   if (req.method === "OPTIONS") return res.status(204).end();
 
+  // Gemini API က POST ကိုပဲ လက်ခံတာမို့လို့ POST မဟုတ်ရင် Error ပေးမယ်
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed. Use POST. Received: " + req.method });
   }
