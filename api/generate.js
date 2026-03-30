@@ -1,6 +1,10 @@
 export const config = { runtime: "nodejs" };
 
 export default async function handler(req, res) {
+  // Debug: ဘယ် Method နဲ့ ရောက်လာလဲဆိုတာ အရင်ဆုံး Log ထုတ်မယ်
+  console.log("Incoming Request Method:", req.method);
+  console.log("Incoming Request URL:", req.url);
+
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-relay-token");
@@ -8,14 +12,12 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
 
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed. Use POST." });
+    return res.status(405).json({ error: "Method not allowed. Use POST. Received: " + req.method });
   }
 
   try {
     const apiKey = (process.env.GEMINI_API_KEY || "").trim();
-    
-    // Debug: Key အစပိုင်း ၄ လုံးကို Log ထုတ်ပေးမယ်
-    console.log("DEBUG: API Key starts with:", apiKey ? apiKey.substring(0, 4) : "NULL");
+    console.log("API Key loaded:", apiKey ? `Yes (Length: ${apiKey.length})` : "No");
 
     if (!apiKey) {
       return res.status(500).json({ error: "Relay is missing GEMINI_API_KEY." });
